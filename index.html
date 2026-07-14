@@ -423,6 +423,12 @@
   .waitlist .form-status.error{ color:#FFE4D8; }
   .turnstile-holder:not(:empty){ margin-top:16px; }
   .waitlist .turnstile-holder{ display:flex; justify-content:center; }
+  /* Hide Cloudflare's blue "Troubleshoot" / failure fallback link */
+  .turnstile-holder a,
+  .turnstile-holder .cf-turnstile-wrapper:has(a){
+    display:none !important;
+  }
+  .turnstile-holder.is-hidden{ display:none !important; margin:0 !important; }
 
   /* ---------- faq ---------- */
   .faq{ padding:120px 0; }
@@ -720,10 +726,40 @@
     TURNSTILE_TARGETS.forEach((t) => {
       const holder = document.getElementById(t.holder);
       const form = document.getElementById(t.form);
-      if (holder && form) {
-        const id = turnstile.render(holder, { sitekey: TURNSTILE_SITE_KEY, theme: 'auto' });
+      if (!holder || !form) return;
+
+      const hideBrokenWidget = () => {
+        try { if (turnstileWidgets.has(form)) turnstile.remove(turnstileWidgets.get(form)); } catch (_) {}
+        turnstileWidgets.delete(form);
+        holder.innerHTML = '';
+        holder.classList.add('is-hidden');
+      };
+
+      try {
+        const id = turnstile.render(holder, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: 'auto',
+          'error-callback': hideBrokenWidget,
+          'unsupported-callback': hideBrokenWidget,
+        });
         turnstileWidgets.set(form, id);
+      } catch (_) {
+        hideBrokenWidget();
       }
+
+      // Belt-and-suspenders: if Cloudflare injects its Troubleshoot fallback, remove it.
+      const scrub = () => {
+        const links = holder.querySelectorAll('a');
+        links.forEach((a) => {
+          const label = (a.textContent || '').trim().toLowerCase();
+          if (label.includes('troubleshoot') || (a.href || '').includes('cloudflare')) {
+            hideBrokenWidget();
+          }
+        });
+      };
+      scrub();
+      const mo = new MutationObserver(scrub);
+      mo.observe(holder, { childList: true, subtree: true });
     });
   };
 
@@ -845,7 +881,8 @@
       }
 
       const captchaToken = getTurnstileToken(form);
-      if (turnstileEnabled && !captchaToken) {
+      const captchaRequired = turnstileEnabled && turnstileWidgets.has(form);
+      if (captchaRequired && !captchaToken) {
         setFormStatus(statusEl, 'error', 'Please complete the verification, then try again.');
         return;
       }
