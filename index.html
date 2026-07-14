@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Upathion — Talk to someone who's already there</title>
 <meta name="description" content="Upathion connects high schoolers with current undergrads at the colleges they dream about. Real conversations, real answers, and a community that lasts.">
+<link rel="icon" type="image/png" href="assets/upathion-logo.png">
+<link rel="shortcut icon" type="image/png" href="assets/upathion-logo.png">
+<link rel="apple-touch-icon" href="assets/upathion-logo.png">
+<meta property="og:title" content="Upathion — Talk to someone who's already there">
+<meta property="og:description" content="Upathion connects high schoolers with current undergrads at the colleges they dream about. Real conversations, real answers, and a community that lasts.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/upathion-logo.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Upathion — Talk to someone who's already there">
+<meta name="twitter:description" content="Upathion connects high schoolers with current undergrads at the colleges they dream about. Real conversations, real answers, and a community that lasts.">
+<meta name="twitter:image" content="assets/upathion-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -129,9 +140,8 @@
     display:flex; align-items:center; gap:9px;
   }
   .logo-mark{
-    width:11px; height:11px; border-radius:3px;
-    background:var(--grad);
-    transform:rotate(45deg);
+    width:28px; height:28px; border-radius:8px;
+    background:#000 url('assets/upathion-logo.png') center/cover no-repeat;
     flex-shrink:0;
   }
   .nav-links{
@@ -150,6 +160,7 @@
   }
   .btn-primary{
     background:var(--grad);
+    background-clip:padding-box;
     color:#fff;
     box-shadow:0 8px 22px -8px rgba(233,32,99,0.55);
   }
@@ -314,7 +325,7 @@
     transition:border-color 0.5s var(--ease), color 0.5s var(--ease), box-shadow 0.5s var(--ease);
   }
   .tl-step.in .tl-dot{
-    border-color:transparent;
+    border:0;
     background:var(--grad);
     color:#fff;
     box-shadow:0 10px 24px -8px rgba(255,136,0,0.5);
@@ -338,7 +349,7 @@
   }
   .side-card.accent{
     background:var(--grad);
-    border-color:transparent;
+    border:0;
     color:#fff;
   }
   .side-card .eyebrow{ margin-bottom:18px; }
@@ -393,7 +404,9 @@
 
   /* ---------- faq ---------- */
   .faq{ padding:120px 0; }
-  .faq-list{ max-width:740px; }
+  .faq .section-head{ text-align:center; margin-left:auto; margin-right:auto; }
+  .faq .section-head .eyebrow{ justify-content:center; }
+  .faq-list{ max-width:740px; margin:0 auto; }
   .faq-item{ border-bottom:1px solid var(--line-on-cream); }
   .faq-q{
     width:100%; display:flex; align-items:center; justify-content:space-between;
