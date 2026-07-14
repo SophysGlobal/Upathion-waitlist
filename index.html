@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upathion — Talk to someone who's already there</title>
+<meta name="description" content="Upathion connects high schoolers with current undergrads at the colleges they dream about. Real conversations, real answers, and a community that lasts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rose:#E92063;
+    --orange:#FF8800;
+    --gold:#FFC61A;
+    --cream:#FFFBF3;
+    --cream-dim:#FBF3E7;
+    --ink:#17110F;
+    --ink-soft:#241A16;
+    --ink-line:#3A2C26;
+    --text-on-cream:#2B1D19;
+    --text-muted:#6E5A52;
+    --text-on-ink:#F3E9DF;
+    --text-on-ink-muted:#B9A79C;
+    --line-on-cream:rgba(43,29,25,0.12);
+    --line-on-ink:rgba(243,233,223,0.14);
+    --grad: linear-gradient(100deg, var(--rose) 0%, var(--orange) 55%, var(--gold) 100%);
+    --grad-soft: linear-gradient(100deg, rgba(233,32,99,0.12) 0%, rgba(255,136,0,0.12) 55%, rgba(255,198,26,0.12) 100%);
+    --radius: 20px;
+    --ease: cubic-bezier(0.22,1,0.36,1);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--cream);
+    color:var(--text-on-cream);
+    font-family:'Inter', sans-serif;
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  img,svg{ display:block; max-width:100%; }
+  a{ color:inherit; text-decoration:none; }
+  ul{ list-style:none; }
+  button{ font-family:inherit; cursor:pointer; }
+  input{ font-family:inherit; }
+
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    line-height:1.08;
+  }
+  em{
+    font-style:italic;
+    font-weight:500;
+    background:var(--grad);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    font-weight:500;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--grad);
+    flex-shrink:0;
+  }
+  .eyebrow.on-ink{ color:var(--text-on-ink-muted); }
+  .eyebrow.on-cream{ color:var(--text-muted); }
+
+  .wrap{
+    max-width:1160px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+  section{ position:relative; }
+  .bg-ink{ background:var(--ink); color:var(--text-on-ink); }
+  .bg-cream{ background:var(--cream); }
+  .bg-cream-dim{ background:var(--cream-dim); }
+
+  /* ---------- reveal-on-scroll ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(22px);
+    transition:opacity 0.8s var(--ease), transform 0.8s var(--ease);
+  }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .reveal-stagger > *{ transition-delay:calc(var(--i,0) * 90ms); }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    .reveal{ opacity:1 !important; transform:none !important; transition:none !important; }
+    *{ animation:none !important; }
+  }
+
+  /* ---------- nav ---------- */
+  .nav{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding:18px 0;
+    transition:background 0.4s var(--ease), border-color 0.4s var(--ease), padding 0.4s var(--ease);
+    border-bottom:1px solid transparent;
+  }
+  .nav.scrolled{
+    background:rgba(255,251,243,0.86);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom-color:var(--line-on-cream);
+    padding:12px 0;
+  }
+  .nav-row{ display:flex; align-items:center; justify-content:space-between; }
+  .logo{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:21px;
+    letter-spacing:-0.01em;
+    display:flex; align-items:center; gap:9px;
+  }
+  .logo-mark{
+    width:11px; height:11px; border-radius:3px;
+    background:var(--grad);
+    transform:rotate(45deg);
+    flex-shrink:0;
+  }
+  .nav-links{
+    display:flex; align-items:center; gap:34px;
+    font-size:14.5px; font-weight:500; color:var(--text-muted);
+  }
+  .nav-links a:hover{ color:var(--text-on-cream); }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:12px 22px;
+    border-radius:100px;
+    font-size:14.5px; font-weight:600;
+    border:1px solid transparent;
+    transition:transform 0.35s var(--ease), box-shadow 0.35s var(--ease), opacity 0.3s;
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:var(--grad);
+    color:#fff;
+    box-shadow:0 8px 22px -8px rgba(233,32,99,0.55);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 14px 28px -10px rgba(233,32,99,0.6); }
+  .btn-primary:active{ transform:translateY(0); }
+  .btn-ghost-ink{ border-color:var(--line-on-ink); color:var(--text-on-ink); }
+  .btn-ghost-ink:hover{ background:rgba(243,233,223,0.08); }
+  .btn[disabled]{ opacity:0.6; cursor:default; transform:none !important; }
+  .nav .btn-primary{ padding:10px 20px; font-size:14px; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:168px 0 100px;
+    position:relative;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    gap:56px;
+    align-items:center;
+  }
+  .hero h1{
+    font-size:clamp(38px, 5.4vw, 66px);
+    margin:18px 0 22px;
+  }
+  .hero p.lede{
+    font-size:18px;
+    color:var(--text-muted);
+    max-width:520px;
+    margin-bottom:34px;
+  }
+  .hero-form{
+    display:flex;
+    gap:10px;
+    max-width:460px;
+    margin-bottom:14px;
+  }
+  .hero-form input[type="email"]{
+    flex:1;
+    padding:14px 18px;
+    border-radius:100px;
+    border:1.5px solid var(--line-on-cream);
+    background:#fff;
+    font-size:15px;
+    color:var(--text-on-cream);
+    outline:none;
+    transition:border-color 0.3s;
+  }
+  .hero-form input[type="email"]:focus{ border-color:var(--orange); }
+  .form-note{ font-size:12.5px; color:var(--text-muted); }
+  .form-note strong{ color:var(--text-on-cream); }
+
+  .hero-visual{ position:relative; }
+  .path-card{
+    background:#fff;
+    border-radius:28px;
+    border:1px solid var(--line-on-cream);
+    padding:28px 22px 22px;
+    box-shadow:0 30px 70px -30px rgba(43,29,25,0.28);
+  }
+  .path-card-label{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:6px;
+  }
+  .path-svg path.route{
+    fill:none;
+    stroke:url(#routeGrad);
+    stroke-width:3;
+    stroke-linecap:round;
+    stroke-dasharray:900;
+    stroke-dashoffset:900;
+    transition:stroke-dashoffset 1.8s var(--ease);
+  }
+  .path-svg.in path.route{ stroke-dashoffset:0; }
+  .path-svg .stop{
+    opacity:0; transform:scale(0.4);
+    transform-origin:center;
+    transition:opacity 0.5s var(--ease), transform 0.5s var(--ease);
+  }
+  .path-svg.in .stop{ opacity:1; transform:scale(1); }
+  .path-svg.in .stop:nth-of-type(1){ transition-delay:0.15s; }
+  .path-svg.in .stop:nth-of-type(2){ transition-delay:0.55s; }
+  .path-svg.in .stop:nth-of-type(3){ transition-delay:0.95s; }
+  .path-svg.in .stop:nth-of-type(4){ transition-delay:1.35s; }
+  .path-svg.in .stop:nth-of-type(5){ transition-delay:1.7s; }
+  .path-endpoints{
+    display:flex; justify-content:space-between;
+    font-size:13px; font-weight:600; margin-top:4px;
+  }
+  .path-endpoints span:last-child{ color:var(--orange); }
+
+  /* ---------- section headings ---------- */
+  .section-head{ max-width:680px; margin-bottom:56px; }
+  .section-head h2{ font-size:clamp(28px,3.6vw,42px); margin-top:14px; }
+  .section-head p{ margin-top:16px; font-size:16.5px; }
+  .on-cream-muted{ color:var(--text-muted); }
+  .on-ink-muted{ color:var(--text-on-ink-muted); }
+
+  /* ---------- problem section ---------- */
+  .problem{ padding:120px 0; }
+  .problem-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:60px;
+    align-items:start;
+  }
+  .problem-list{ display:flex; flex-direction:column; gap:22px; }
+  .problem-item{
+    display:flex; gap:16px;
+    padding-bottom:22px;
+    border-bottom:1px solid var(--line-on-ink);
+  }
+  .problem-item:last-child{ border-bottom:none; }
+  .problem-item .no{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--gold);
+    padding-top:3px;
+    flex-shrink:0;
+    width:24px;
+  }
+  .problem-item h4{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin-bottom:6px; }
+  .problem-item p{ color:var(--text-on-ink-muted); font-size:15px; }
+
+  /* ---------- how it works / path timeline ---------- */
+  .how{ padding:120px 0 130px; }
+  .timeline{ position:relative; max-width:760px; margin:0 auto; }
+  .timeline-line{
+    position:absolute;
+    left:29px; top:10px; bottom:10px;
+    width:2px;
+    background:var(--line-on-cream);
+  }
+  .timeline-line-fill{
+    position:absolute; left:0; top:0; width:100%; height:0%;
+    background:var(--grad);
+    transition:height 1.4s var(--ease);
+  }
+  .timeline.in .timeline-line-fill{ height:100%; }
+  .tl-step{
+    position:relative;
+    display:grid;
+    grid-template-columns:60px 1fr;
+    gap:0;
+    padding-bottom:52px;
+  }
+  .tl-step:last-child{ padding-bottom:0; }
+  .tl-dot{
+    width:60px; height:60px;
+    border-radius:50%;
+    background:#fff;
+    border:2px solid var(--line-on-cream);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500; font-size:14px;
+    color:var(--text-muted);
+    position:relative; z-index:2;
+    flex-shrink:0;
+    transition:border-color 0.5s var(--ease), color 0.5s var(--ease), box-shadow 0.5s var(--ease);
+  }
+  .tl-step.in .tl-dot{
+    border-color:transparent;
+    background:var(--grad);
+    color:#fff;
+    box-shadow:0 10px 24px -8px rgba(255,136,0,0.5);
+  }
+  .tl-content{ padding-left:26px; padding-top:8px; }
+  .tl-content h3{ font-size:22px; margin-bottom:8px; }
+  .tl-content p{ color:var(--text-muted); font-size:15.5px; max-width:480px; }
+
+  /* ---------- two sides ---------- */
+  .sides{ padding:120px 0; }
+  .sides-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
+  }
+  .side-card{
+    border-radius:var(--radius);
+    padding:38px 32px;
+    border:1px solid var(--line-on-ink);
+    background:var(--ink-soft);
+  }
+  .side-card.accent{
+    background:var(--grad);
+    border-color:transparent;
+    color:#fff;
+  }
+  .side-card .eyebrow{ margin-bottom:18px; }
+  .side-card.accent .eyebrow{ color:rgba(255,255,255,0.85); }
+  .side-card.accent .eyebrow::before{ background:#fff; }
+  .side-card h3{ font-size:26px; margin-bottom:14px; }
+  .side-card p{ color:var(--text-on-ink-muted); font-size:15.5px; }
+  .side-card.accent p{ color:rgba(255,255,255,0.9); }
+  .side-list{ margin-top:22px; display:flex; flex-direction:column; gap:11px; }
+  .side-list li{ font-size:14.5px; display:flex; gap:10px; align-items:baseline; }
+  .side-list li::before{ content:"—"; opacity:0.5; flex-shrink:0; }
+
+  /* ---------- waitlist ---------- */
+  .waitlist{ padding:110px 0; position:relative; overflow:hidden; }
+  .waitlist::before{
+    content:"";
+    position:absolute; inset:0;
+    background:var(--grad);
+    opacity:0.94;
+  }
+  .waitlist-inner{
+    position:relative; z-index:1;
+    max-width:640px; margin:0 auto;
+    text-align:center;
+    color:#fff;
+  }
+  .waitlist h2{ font-size:clamp(30px,4.4vw,48px); color:#fff; margin:16px 0 16px; }
+  .waitlist p.lede{ color:rgba(255,255,255,0.9); font-size:17px; max-width:480px; margin:0 auto 34px; }
+  .waitlist .eyebrow{ color:rgba(255,255,255,0.85); justify-content:center; }
+  .waitlist .eyebrow::before{ background:#fff; }
+  .waitlist-form{
+    display:flex; gap:10px;
+    background:rgba(255,255,255,0.16);
+    border:1px solid rgba(255,255,255,0.35);
+    padding:6px; border-radius:100px;
+    max-width:460px; margin:0 auto;
+  }
+  .waitlist-form input[type="email"]{
+    flex:1; border:none; background:transparent;
+    padding:12px 16px; font-size:15px; color:#fff; outline:none;
+  }
+  .waitlist-form input[type="email"]::placeholder{ color:rgba(255,255,255,0.7); }
+  .waitlist-form .btn{ background:var(--ink); color:#fff; flex-shrink:0; }
+  .waitlist-form .btn:hover{ transform:none; opacity:0.88; box-shadow:none; }
+  .waitlist-note{ margin-top:16px; font-size:13px; color:rgba(255,255,255,0.78); }
+  .hp-field{ position:absolute; left:-9999px; opacity:0; height:0; width:0; }
+  .form-status{
+    margin-top:16px; font-size:14.5px; font-weight:500;
+    min-height:20px;
+  }
+  .form-status.error{ color:#fff6f0; }
+
+  /* ---------- faq ---------- */
+  .faq{ padding:120px 0; }
+  .faq-list{ max-width:740px; }
+  .faq-item{ border-bottom:1px solid var(--line-on-cream); }
+  .faq-q{
+    width:100%; display:flex; align-items:center; justify-content:space-between;
+    padding:24px 0; background:none; border:none; text-align:left;
+    font-family:'Fraunces', serif; font-size:18.5px; font-weight:600;
+    color:var(--text-on-cream);
+  }
+  .faq-q .plus{
+    font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:400;
+    color:var(--orange); flex-shrink:0; margin-left:20px;
+    transition:transform 0.4s var(--ease);
+  }
+  .faq-item.open .faq-q .plus{ transform:rotate(45deg); }
+  .faq-a{
+    max-height:0; overflow:hidden;
+    transition:max-height 0.5s var(--ease);
+  }
+  .faq-a p{ padding-bottom:24px; color:var(--text-muted); font-size:15.5px; max-width:600px; }
+
+  /* ---------- footer ---------- */
+  footer{ padding:56px 0 40px; border-top:1px solid var(--line-on-ink); }
+  .footer-row{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;
+  }
+  .footer-tag{ font-size:13.5px; color:var(--text-on-ink-muted); }
+  .footer-links{ display:flex; gap:26px; font-size:13.5px; color:var(--text-on-ink-muted); }
+  .footer-links a:hover{ color:var(--text-on-ink); }
+
+  @media (max-width: 900px){
+    .hero-grid, .problem-grid, .sides-grid{ grid-template-columns:1fr; }
+    .hero{ padding-top:132px; }
+    .hero-visual{ order:-1; }
+    .nav-links{ display:none; }
+  }
+  @media (max-width: 560px){
+    .hero-form, .waitlist-form{ flex-direction:column; border-radius:22px; }
+    .waitlist-form .btn{ width:100%; }
+    .hero-form .btn{ width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="wrap nav-row">
+    <a href="#top" class="logo"><span class="logo-mark"></span>Upathion</a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#sides">For you</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a href="#waitlist" class="btn btn-primary">Join the waitlist</a>
+  </div>
+</nav>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero bg-cream">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow on-cream reveal in">The path before the acceptance letter</span>
+        <h1 class="reveal in">Talk to someone who's <em>already there.</em></h1>
+        <p class="lede reveal in">Upathion matches high schoolers with current undergrads at the colleges they're dreaming about — real conversations about the dorms, the workload, and the Tuesday nights, not another brochure.</p>
+        <form class="hero-form reveal in" id="heroForm" novalidate>
+          <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
+          <button type="submit" class="btn btn-primary">Join the waitlist</button>
+        </form>
+        <p class="form-note reveal in">Free to join. <strong>No spam</strong> — just a spot in line.</p>
+      </div>
+
+      <div class="hero-visual reveal in">
+        <div class="path-card">
+          <div class="path-card-label">
+            <span>Your path</span>
+            <span>Live preview</span>
+          </div>
+          <svg class="path-svg" id="heroPath" viewBox="0 0 520 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="routeGrad" x1="0" y1="300" x2="520" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#E92063"/>
+                <stop offset="55%" stop-color="#FF8800"/>
+                <stop offset="100%" stop-color="#FFC61A"/>
+              </linearGradient>
+            </defs>
+            <path class="route" d="M40 250 C 130 250, 110 170, 180 160 C 260 148, 250 90, 330 78 C 390 68, 400 40, 480 30"/>
+            <circle class="stop" cx="40" cy="250" r="7" fill="#E92063"/>
+            <circle class="stop" cx="180" cy="160" r="6" fill="#FF5A3D"/>
+            <circle class="stop" cx="330" cy="78" r="6" fill="#FF8800"/>
+            <circle class="stop" cx="480" cy="30" r="8" fill="#FFC61A"/>
+          </svg>
+          <div class="path-endpoints">
+            <span>You, junior year</span>
+            <span>Campus, fall move-in</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="problem bg-ink">
+    <div class="wrap problem-grid">
+      <div class="reveal">
+        <span class="eyebrow on-ink">What the rankings won't tell you</span>
+        <h2 style="font-size:clamp(28px,3.6vw,40px); margin-top:16px;">Selectivity is a number.<br>Belonging is a feeling.</h2>
+        <p style="margin-top:18px; color:var(--text-on-ink-muted); font-size:16px; max-width:440px;">You can filter by acceptance rate, average SAT, or campus size. What you can't do is ask a spreadsheet whether the pre-med track is brutal, or if a small town gets lonely by February. That takes a person.</p>
+      </div>
+      <div class="problem-list reveal-stagger">
+        <div class="problem-item reveal" style="--i:0">
+          <span class="no">01</span>
+          <div><h4>Brochures are marketing</h4><p>Every campus tour hits the same four buildings and the same sunny quad.</p></div>
+        </div>
+        <div class="problem-item reveal" style="--i:1">
+          <span class="no">02</span>
+          <div><h4>Forums are anonymous</h4><p>Threads with no names, no context, and no way to ask a follow-up.</p></div>
+        </div>
+        <div class="problem-item reveal" style="--i:2">
+          <span class="no">03</span>
+          <div><h4>Advisors are stretched thin</h4><p>One counselor, hundreds of students, and a hundred different dream schools.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how bg-cream" id="how">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow on-cream">How Upathion works</span>
+        <h2>Four steps from "I wonder" to "I know."</h2>
+        <p class="on-cream-muted">A straight line from your questions to someone living the answer.</p>
+      </div>
+
+      <div class="timeline" id="timeline">
+        <div class="timeline-line"><div class="timeline-line-fill"></div></div>
+
+        <div class="tl-step reveal">
+          <div class="tl-dot">01</div>
+          <div class="tl-content">
+            <h3>Build your profile</h3>
+            <p>Tell us the schools on your list, the majors you're weighing, and what's actually keeping you up at night.</p>
+          </div>
+        </div>
+        <div class="tl-step reveal">
+          <div class="tl-dot">02</div>
+          <div class="tl-content">
+            <h3>Get matched</h3>
+            <p>We connect you with current undergrads at those exact schools — people who chose the same fork in the road, recently.</p>
+          </div>
+        </div>
+        <div class="tl-step reveal">
+          <div class="tl-dot">03</div>
+          <div class="tl-content">
+            <h3>Ask anything</h3>
+            <p>One-on-one conversations, on your schedule. No filters, no filler, no sales pitch for a tour package.</p>
+          </div>
+        </div>
+        <div class="tl-step reveal">
+          <div class="tl-dot">04</div>
+          <div class="tl-content">
+            <h3>Stay in the loop</h3>
+            <p>Once you're in, you don't disappear. Upathion becomes the community that carries you past decision day.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TWO SIDES -->
+  <section class="sides bg-ink" id="sides">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow on-ink">Built for both sides of the path</span>
+        <h2 style="font-size:clamp(28px,3.6vw,40px);">Two years apart. Same questions.</h2>
+      </div>
+      <div class="sides-grid">
+        <div class="side-card accent reveal">
+          <span class="eyebrow">For high schoolers</span>
+          <h3>Get closer to the school before you commit to it</h3>
+          <p>Match with undergrads at your target schools and ask the questions no info session covers.</p>
+          <ul class="side-list">
+            <li>Message current students by school, major, or interest</li>
+            <li>See what a normal week actually looks like</li>
+            <li>Build your list around fit, not just rankings</li>
+          </ul>
+        </div>
+        <div class="side-card reveal">
+          <span class="eyebrow on-ink">For college students</span>
+          <h3>Turn what you already know into community</h3>
+          <p>Mentor students who remind you of yourself two years ago — and find your own people on campus while you're at it.</p>
+          <ul class="side-list">
+            <li>Answer questions on your own time, at your own depth</li>
+            <li>Meet other undergrads through shared events and groups</li>
+            <li>Build a track record that colleges and employers can see</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section class="waitlist" id="waitlist">
+    <div class="wrap waitlist-inner reveal">
+      <span class="eyebrow">Early access</span>
+      <h2>Be one of the first through the door.</h2>
+      <p class="lede">We're letting people in slowly so every match is a good one. Join now to get a spot near the front of the line.</p>
+
+      <form id="waitlistForm" novalidate>
+        <div class="waitlist-form">
+          <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
+          <input type="text" name="company" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button type="submit" class="btn" id="waitlistBtn">Join the waitlist</button>
+        </div>
+        <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+      </form>
+      <p class="waitlist-note">One email. No spam, ever. Unsubscribe anytime.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq bg-cream" id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow on-cream">Good questions</span>
+        <h2>A few things people ask</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item reveal">
+          <button class="faq-q"><span>Is Upathion free to join?</span><span class="plus">+</span></button>
+          <div class="faq-a"><p>Yes — joining the waitlist and creating a profile is free. We'll share more details on any future premium features as we get closer to launch.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q"><span>Who can sign up as a mentor?</span><span class="plus">+</span></button>
+          <div class="faq-a"><p>Any current undergraduate student can join to answer questions about their school. It's a great way to build community on your own campus, too.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q"><span>When will I get matched?</span><span class="plus">+</span></button>
+          <div class="faq-a"><p>We're onboarding waitlist members in small batches so every match stays high quality. Joining earlier means getting in sooner.</p></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q"><span>Is my information private?</span><span class="plus">+</span></button>
+          <div class="faq-a"><p>Your profile is only visible to people on Upathion, and you control what you share. We never sell your data.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bg-ink">
+  <div class="wrap footer-row">
+    <a href="#top" class="logo" style="color:var(--text-on-ink);"><span class="logo-mark"></span>Upathion</a>
+    <p class="footer-tag">The path to college, with people on it.</p>
+    <div class="footer-links">
+      <a href="#how">How it works</a>
+      <a href="#faq">FAQ</a>
+      <a href="#waitlist">Waitlist</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ===== CONFIG =====
+  // Paste your Google Apps Script Web App URL here after deploying (see SETUP guide).
+  const WAITLIST_ENDPOINT = "https://script.google.com/macros/s/AKfycbx7rfOSSeEAhfXrgm7nKsxMcze8lxyRLEC4ACTKJKpaHsx8RKqsm7pJHeQtx136FDVE3w/exec";
+
+  // ===== Nav background on scroll =====
+  const nav = document.getElementById('nav');
+  const onScroll = () => {
+    nav.classList.toggle('scrolled', window.scrollY > 12);
+  };
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // ===== Scroll reveal =====
+  const revealEls = document.querySelectorAll('.reveal, .path-svg, .timeline, .tl-step');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '0px 0px -60px 0px' });
+  revealEls.forEach(el => io.observe(el));
+
+  // ===== FAQ accordion =====
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const q = item.querySelector('.faq-q');
+    const a = item.querySelector('.faq-a');
+    q.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(other => {
+        if (other !== item) {
+          other.classList.remove('open');
+          other.querySelector('.faq-a').style.maxHeight = null;
+        }
+      });
+      item.classList.toggle('open', !isOpen);
+      a.style.maxHeight = !isOpen ? a.scrollHeight + 'px' : null;
+    });
+  });
+
+  // ===== Waitlist submission =====
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  async function submitToSheet(email, honeypot) {
+    const params = new URLSearchParams();
+    params.append('email', email);
+    params.append('company', honeypot || '');
+    params.append('source', 'landing-page');
+
+    // 'no-cors' lets this POST reach the Apps Script Web App without a CORS
+    // preflight; we can't read the response, so we treat "no network error" as success.
+    await fetch(WAITLIST_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: params
+    });
+  }
+
+  function wireForm(form, statusEl, button) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const emailInput = form.querySelector('input[type="email"]');
+      const honeypotInput = form.querySelector('.hp-field');
+      const email = emailInput.value.trim();
+
+      if (!isValidEmail(email)) {
+        if (statusEl) { statusEl.textContent = 'Please enter a valid email address.'; statusEl.classList.add('error'); }
+        emailInput.focus();
+        return;
+      }
+
+      if (WAITLIST_ENDPOINT.includes('PASTE_YOUR_GOOGLE_APPS_SCRIPT')) {
+        if (statusEl) {
+          statusEl.textContent = "Waitlist isn't connected yet — add your Apps Script URL in the code.";
+          statusEl.classList.add('error');
+        } else {
+          alert("Waitlist isn't connected yet — add your Apps Script URL in the code.");
+        }
+        return;
+      }
+
+      const originalLabel = button.textContent;
+      button.disabled = true;
+      button.textContent = 'Joining…';
+      if (statusEl) { statusEl.textContent = ''; statusEl.classList.remove('error'); }
+
+      try {
+        await submitToSheet(email, honeypotInput ? honeypotInput.value : '');
+        button.textContent = "You're in ✓";
+        emailInput.value = '';
+        if (statusEl) statusEl.textContent = "You're on the list — we'll be in touch soon.";
+      } catch (err) {
+        button.disabled = false;
+        button.textContent = originalLabel;
+        if (statusEl) {
+          statusEl.textContent = 'Something went wrong. Please try again.';
+          statusEl.classList.add('error');
+        }
+      }
+    });
+  }
+
+  wireForm(document.getElementById('heroForm'), null, document.querySelector('#heroForm button'));
+  wireForm(document.getElementById('waitlistForm'), document.getElementById('formStatus'), document.getElementById('waitlistBtn'));
+</script>
+
+</body>
+</html>
