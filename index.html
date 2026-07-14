@@ -397,10 +397,30 @@
   .waitlist-note{ margin-top:16px; font-size:13px; color:rgba(255,255,255,0.78); }
   .hp-field{ position:absolute; left:-9999px; opacity:0; height:0; width:0; }
   .form-status{
-    margin-top:16px; font-size:14.5px; font-weight:500;
-    min-height:20px;
+    margin-top:12px;
+    font-size:14px;
+    font-weight:500;
+    line-height:1.4;
+    min-height:0;
+    opacity:0;
+    transform:translateY(-6px);
+    pointer-events:none;
+    transition:opacity 0.4s var(--ease), transform 0.4s var(--ease);
   }
-  .form-status.error{ color:#fff6f0; }
+  .form-status.show{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+  .form-status.success{ color:#1F8A45; }
+  .form-status.error{ color:#C03636; }
+  .form-status .status-mark{
+    display:inline-block;
+    margin-right:7px;
+    font-weight:700;
+  }
+  .waitlist .form-status.success{ color:#E8FFE9; }
+  .waitlist .form-status.error{ color:#FFE4D8; }
   .turnstile-holder:not(:empty){ margin-top:16px; }
   .waitlist .turnstile-holder{ display:flex; justify-content:center; }
 
@@ -477,6 +497,7 @@
           <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
           <button type="submit" class="btn btn-primary">Join the waitlist</button>
         </form>
+        <div class="form-status" id="heroFormStatus" role="status" aria-live="polite"></div>
         <div id="heroTurnstile" class="turnstile-holder reveal in"></div>
         <p class="form-note reveal in">Free to join. <strong>No spam</strong> — just a spot in line.</p>
       </div>
@@ -683,7 +704,7 @@
   // The widgets + token generation turn on automatically once a real key is here.
   // (For real bot-blocking, also verify the token in your Apps Script with your SECRET key
   //  via https://challenges.cloudflare.com/turnstile/v0/siteverify )
-  const TURNSTILE_SITE_KEY = "PASTE_YOUR_TURNSTILE_SITE_KEY_HERE";
+  const TURNSTILE_SITE_KEY = "6LcmiVItAAAAAOCSqGXKpMvOH_Neo_nAZxNvbXko";
   const turnstileEnabled = TURNSTILE_SITE_KEY && !TURNSTILE_SITE_KEY.startsWith('PASTE_');
 
   // Maps each form element to its rendered Turnstile widget id.
@@ -787,61 +808,69 @@
     });
   }
 
+  function setFormStatus(statusEl, type, message) {
+    if (!statusEl) return;
+    statusEl.classList.remove('show', 'success', 'error');
+    // Retrigger the enter animation even when the same message is reused.
+    void statusEl.offsetWidth;
+    const mark = type === 'success' ? '✓' : '✕';
+    statusEl.innerHTML = '<span class="status-mark" aria-hidden="true">' + mark + '</span>' + message;
+    statusEl.classList.add(type, 'show');
+  }
+
+  function clearFormStatus(statusEl) {
+    if (!statusEl) return;
+    statusEl.classList.remove('show', 'success', 'error');
+    statusEl.innerHTML = '';
+  }
+
   function wireForm(form, statusEl, button) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const emailInput = form.querySelector('input[type="email"]');
       const honeypotInput = form.querySelector('.hp-field');
       const email = emailInput.value.trim();
+      const originalLabel = button.dataset.originalLabel || button.textContent;
+      button.dataset.originalLabel = originalLabel;
 
       if (!isValidEmail(email)) {
-        if (statusEl) { statusEl.textContent = 'Please enter a valid email address.'; statusEl.classList.add('error'); }
+        setFormStatus(statusEl, 'error', 'Please enter a valid email address.');
         emailInput.focus();
         return;
       }
 
       if (WAITLIST_ENDPOINT.includes('PASTE_YOUR_GOOGLE_APPS_SCRIPT')) {
-        if (statusEl) {
-          statusEl.textContent = "Waitlist isn't connected yet — add your Apps Script URL in the code.";
-          statusEl.classList.add('error');
-        } else {
-          alert("Waitlist isn't connected yet — add your Apps Script URL in the code.");
-        }
+        setFormStatus(statusEl, 'error', "Waitlist isn't connected yet — add your Apps Script URL in the code.");
         return;
       }
 
       const captchaToken = getTurnstileToken(form);
       if (turnstileEnabled && !captchaToken) {
-        const msg = 'Please complete the verification, then try again.';
-        if (statusEl) { statusEl.textContent = msg; statusEl.classList.add('error'); }
-        else { alert(msg); }
+        setFormStatus(statusEl, 'error', 'Please complete the verification, then try again.');
         return;
       }
 
-      const originalLabel = button.textContent;
       button.disabled = true;
       button.textContent = 'Joining…';
-      if (statusEl) { statusEl.textContent = ''; statusEl.classList.remove('error'); }
+      clearFormStatus(statusEl);
 
       try {
         await submitToSheet(email, honeypotInput ? honeypotInput.value : '', captchaToken);
-        button.textContent = "You're in ✓";
         emailInput.value = '';
         resetTurnstile(form);
-        if (statusEl) statusEl.textContent = "You're on the list — we'll be in touch soon.";
+        button.disabled = false;
+        button.textContent = originalLabel;
+        setFormStatus(statusEl, 'success', "You're on the list — we'll be in touch soon.");
       } catch (err) {
         button.disabled = false;
         button.textContent = originalLabel;
         resetTurnstile(form);
-        if (statusEl) {
-          statusEl.textContent = 'Something went wrong. Please try again.';
-          statusEl.classList.add('error');
-        }
+        setFormStatus(statusEl, 'error', 'Something went wrong. Please try again.');
       }
     });
   }
 
-  wireForm(document.getElementById('heroForm'), null, document.querySelector('#heroForm button'));
+  wireForm(document.getElementById('heroForm'), document.getElementById('heroFormStatus'), document.querySelector('#heroForm button'));
   wireForm(document.getElementById('waitlistForm'), document.getElementById('formStatus'), document.getElementById('waitlistBtn'));
 </script>
 
