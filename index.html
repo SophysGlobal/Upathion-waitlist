@@ -397,7 +397,8 @@
   .waitlist-note{ margin-top:16px; font-size:13px; color:rgba(255,255,255,0.78); }
   .hp-field{ position:absolute; left:-9999px; opacity:0; height:0; width:0; }
   .form-status{
-    margin-top:12px;
+    margin-top:0;
+    margin-bottom:0;
     font-size:14px;
     font-weight:500;
     line-height:1.4;
@@ -405,12 +406,13 @@
     opacity:0;
     transform:translateY(-6px);
     pointer-events:none;
-    transition:opacity 0.4s var(--ease), transform 0.4s var(--ease);
+    transition:opacity 0.4s var(--ease), transform 0.4s var(--ease), margin 0.4s var(--ease);
   }
   .form-status.show{
     opacity:1;
     transform:translateY(0);
     pointer-events:auto;
+    margin-bottom:14px; /* match .hero-form's margin-bottom so gaps above & below are equal */
   }
   .form-status.success{ color:#1F8A45; }
   .form-status.error{ color:#C03636; }
@@ -710,7 +712,7 @@
   // The widgets + token generation turn on automatically once a real key is here.
   // (For real bot-blocking, also verify the token in your Apps Script with your SECRET key
   //  via https://challenges.cloudflare.com/turnstile/v0/siteverify )
-  const TURNSTILE_SITE_KEY = "6LcmiVItAAAAAOCSqGXKpMvOH_Neo_nAZxNvbXko";
+  const TURNSTILE_SITE_KEY = "0x4AAAAAAD1asXFLKyHAFb29";
   const turnstileEnabled = TURNSTILE_SITE_KEY && !TURNSTILE_SITE_KEY.startsWith('PASTE_');
 
   // Maps each form element to its rendered Turnstile widget id.
