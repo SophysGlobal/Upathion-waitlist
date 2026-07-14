@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Upathion — Talk to someone who's already there</title>
 <meta name="description" content="Upathion connects high schoolers with current undergrads at the colleges they dream about. Real conversations, real answers, and a community that lasts.">
-<link rel="icon" type="image/png" href="assets/upathion-logo.png">
-<link rel="shortcut icon" type="image/png" href="assets/upathion-logo.png">
-<link rel="apple-touch-icon" href="assets/upathion-logo.png">
+<link rel="icon" type="image/png" sizes="256x256" href="assets/favicon.png">
+<link rel="shortcut icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
 <meta property="og:title" content="Upathion — Talk to someone who's already there">
 <meta property="og:description" content="Upathion connects high schoolers with current undergrads at the colleges they dream about. Real conversations, real answers, and a community that lasts.">
 <meta property="og:type" content="website">
@@ -140,8 +140,8 @@
     display:flex; align-items:center; gap:9px;
   }
   .logo-mark{
-    width:28px; height:28px; border-radius:8px;
-    background:#000 url('assets/upathion-logo.png') center/cover no-repeat;
+    width:30px; height:30px;
+    background:url('assets/upathion-logo.png') center/contain no-repeat;
     flex-shrink:0;
   }
   .nav-links{
@@ -401,6 +401,8 @@
     min-height:20px;
   }
   .form-status.error{ color:#fff6f0; }
+  .turnstile-holder:not(:empty){ margin-top:16px; }
+  .waitlist .turnstile-holder{ display:flex; justify-content:center; }
 
   /* ---------- faq ---------- */
   .faq{ padding:120px 0; }
@@ -475,6 +477,7 @@
           <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
           <button type="submit" class="btn btn-primary">Join the waitlist</button>
         </form>
+        <div id="heroTurnstile" class="turnstile-holder reveal in"></div>
         <p class="form-note reveal in">Free to join. <strong>No spam</strong> — just a spot in line.</p>
       </div>
 
@@ -621,6 +624,7 @@
           <input type="text" name="company" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
           <button type="submit" class="btn" id="waitlistBtn">Join the waitlist</button>
         </div>
+        <div id="waitlistTurnstile" class="turnstile-holder"></div>
         <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
       </form>
       <p class="waitlist-note">One email. No spam, ever. Unsubscribe anytime.</p>
@@ -674,6 +678,57 @@
   // Paste your Google Apps Script Web App URL here after deploying (see SETUP guide).
   const WAITLIST_ENDPOINT = "https://script.google.com/macros/s/AKfycbx7rfOSSeEAhfXrgm7nKsxMcze8lxyRLEC4ACTKJKpaHsx8RKqsm7pJHeQtx136FDVE3w/exec";
 
+  // ===== Cloudflare Turnstile =====
+  // 👇 PASTE YOUR CLOUDFLARE TURNSTILE SITE KEY BETWEEN THE QUOTES BELOW. That's it.
+  // The widgets + token generation turn on automatically once a real key is here.
+  // (For real bot-blocking, also verify the token in your Apps Script with your SECRET key
+  //  via https://challenges.cloudflare.com/turnstile/v0/siteverify )
+  const TURNSTILE_SITE_KEY = "PASTE_YOUR_TURNSTILE_SITE_KEY_HERE";
+  const turnstileEnabled = TURNSTILE_SITE_KEY && !TURNSTILE_SITE_KEY.startsWith('PASTE_');
+
+  // Maps each form element to its rendered Turnstile widget id.
+  const turnstileWidgets = new Map();
+  const TURNSTILE_TARGETS = [
+    { holder: 'heroTurnstile', form: 'heroForm' },
+    { holder: 'waitlistTurnstile', form: 'waitlistForm' },
+  ];
+
+  // Called automatically by the Turnstile script once it loads (explicit render mode).
+  window.onloadTurnstileCallback = function () {
+    if (typeof turnstile === 'undefined') return;
+    TURNSTILE_TARGETS.forEach((t) => {
+      const holder = document.getElementById(t.holder);
+      const form = document.getElementById(t.form);
+      if (holder && form) {
+        const id = turnstile.render(holder, { sitekey: TURNSTILE_SITE_KEY, theme: 'auto' });
+        turnstileWidgets.set(form, id);
+      }
+    });
+  };
+
+  // Auto-load the Turnstile script only when a real key has been pasted in.
+  if (turnstileEnabled) {
+    const tsScript = document.createElement('script');
+    tsScript.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit';
+    tsScript.async = true;
+    tsScript.defer = true;
+    document.head.appendChild(tsScript);
+  }
+
+  // Reads the current Turnstile token for a form ('' if not solved / not set up).
+  function getTurnstileToken(form) {
+    if (!turnstileEnabled || typeof turnstile === 'undefined') return '';
+    const id = turnstileWidgets.get(form);
+    return id !== undefined ? (turnstile.getResponse(id) || '') : '';
+  }
+
+  // Resets a form's Turnstile widget so it can issue a fresh token next time.
+  function resetTurnstile(form) {
+    if (!turnstileEnabled || typeof turnstile === 'undefined') return;
+    const id = turnstileWidgets.get(form);
+    if (id !== undefined) turnstile.reset(id);
+  }
+
   // ===== Nav background on scroll =====
   const nav = document.getElementById('nav');
   const onScroll = () => {
@@ -716,11 +771,12 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
-  async function submitToSheet(email, honeypot) {
+  async function submitToSheet(email, honeypot, captchaToken) {
     const params = new URLSearchParams();
     params.append('email', email);
     params.append('company', honeypot || '');
     params.append('source', 'landing-page');
+    params.append('cf-turnstile-response', captchaToken || '');
 
     // 'no-cors' lets this POST reach the Apps Script Web App without a CORS
     // preflight; we can't read the response, so we treat "no network error" as success.
@@ -754,19 +810,29 @@
         return;
       }
 
+      const captchaToken = getTurnstileToken(form);
+      if (turnstileEnabled && !captchaToken) {
+        const msg = 'Please complete the verification, then try again.';
+        if (statusEl) { statusEl.textContent = msg; statusEl.classList.add('error'); }
+        else { alert(msg); }
+        return;
+      }
+
       const originalLabel = button.textContent;
       button.disabled = true;
       button.textContent = 'Joining…';
       if (statusEl) { statusEl.textContent = ''; statusEl.classList.remove('error'); }
 
       try {
-        await submitToSheet(email, honeypotInput ? honeypotInput.value : '');
+        await submitToSheet(email, honeypotInput ? honeypotInput.value : '', captchaToken);
         button.textContent = "You're in ✓";
         emailInput.value = '';
+        resetTurnstile(form);
         if (statusEl) statusEl.textContent = "You're on the list — we'll be in touch soon.";
       } catch (err) {
         button.disabled = false;
         button.textContent = originalLabel;
+        resetTurnstile(form);
         if (statusEl) {
           statusEl.textContent = 'Something went wrong. Please try again.';
           statusEl.classList.add('error');
